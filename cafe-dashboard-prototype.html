@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Corner Bean – Café dashboard prototype</title>
+<!-- Bulma v1 from its official CDN (cdnjs) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/1.0.2/css/bulma.min.css">
+<style>
+  /* Terracotta accent (white text on it passes WCAG AA) */
+  :root{--bulma-primary-h:15deg;--bulma-primary-s:60%;--bulma-primary-l:40%}
+  :focus-visible{outline:3px solid #1d1d1d!important;outline-offset:2px}
+  .icon-box{width:3rem;height:3rem;border-radius:.75rem;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+  .table-wrap{overflow-x:auto}
+  .progress{margin:0;min-width:5rem}
+  .linkish{background:none;border:0;padding:0;font:inherit;font-weight:600;color:var(--bulma-link-text);cursor:pointer;text-align:left;text-decoration:underline}
+  body{min-height:100vh;display:flex;flex-direction:column}
+  main{flex:1}
+</style>
+</head>
+<body class="has-background-white-bis">
+
+<a class="button is-small is-primary" href="#main" style="position:absolute;left:-999px" onfocus="this.style.left='8px'" onblur="this.style.left='-999px'">Skip to content</a>
+
+<!-- ========== NAVIGATION (shown on every screen) ========== -->
+<nav class="navbar is-primary" aria-label="Main">
+  <div class="navbar-brand">
+    <span class="navbar-item has-text-weight-bold">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8zM17 10h2a2 2 0 0 1 0 4h-2M8 2v3M12 2v3"/></svg>&nbsp;The Corner Bean
+    </span>
+    <button class="navbar-burger button is-primary is-inverted is-outlined" id="burger" aria-expanded="false" aria-controls="menu" aria-label="Menu" style="border:0;background:none">
+      <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+    </button>
+  </div>
+  <div class="navbar-menu" id="menu">
+    <div class="navbar-start">
+      <a class="navbar-item" href="#" data-go="overview">Overview</a>
+      <a class="navbar-item" href="#" data-go="sales">Sales by item</a>
+      <a class="navbar-item" href="#" data-go="stock">Stock levels</a>
+      <a class="navbar-item" href="#" data-soon>Reports</a>
+      <a class="navbar-item" href="#" data-soon>Settings</a>
+    </div>
+  </div>
+</nav>
+
+<main id="main" class="section">
+<div class="container">
+
+<!-- ========== SCREEN 1: OVERVIEW ========== -->
+<section id="overview" aria-labelledby="h-overview">
+  <h1 class="title" id="h-overview" tabindex="-1">Good afternoon</h1>
+  <p class="subtitle is-6">Thursday 19 November 2026, as of 2:30pm</p>
+  <div class="columns is-multiline">
+    <div class="column is-4"><div class="card"><div class="card-content">
+      <p class="heading">Today's sales so far</p><p class="title is-2" id="o-sales"></p><p class="is-size-7">Typical Thursday: £1,050</p></div></div></div>
+    <div class="column is-4"><div class="card"><div class="card-content">
+      <p class="heading">Orders</p><p class="title is-2" id="o-orders"></p><p class="is-size-7">Average order £6.80</p></div></div></div>
+    <div class="column is-4"><div class="card"><div class="card-content">
+      <p class="heading">Busiest hour</p><p class="title is-2">8am–9am</p><p class="is-size-7">Morning commuter rush</p></div></div></div>
+  </div>
+  <div class="notification is-primary is-light">
+    <h2 class="title is-5">Yesterday's best seller</h2>
+    <p class="mb-3"><strong id="o-best"></strong></p>
+    <button class="button is-primary" data-go="sales" data-tab="yesterday">See yesterday's sales by item</button>
+  </div>
+  <article class="message is-warning">
+    <div class="message-header"><h2 class="is-size-6">Stock check</h2></div>
+    <div class="message-body"><p class="mb-3" id="o-low"></p>
+      <button class="button is-warning" data-go="stock">See stock levels</button></div>
+  </article>
+</section>
+
+<!-- ========== SCREEN 2: SALES BY ITEM ========== -->
+<section id="sales" aria-labelledby="h-sales" hidden>
+  <nav class="breadcrumb" aria-label="Breadcrumb"><ul>
+    <li><a href="#" data-go="overview">Overview</a></li><li class="is-active"><a href="#" aria-current="page">Sales by item</a></li></ul></nav>
+  <h1 class="title" id="h-sales" tabindex="-1">Sales by item</h1>
+  <div class="tabs is-boxed" aria-label="Time period"><ul id="tabs"></ul></div>
+  <div class="field">
+    <label class="label" for="sort">Sort by</label>
+    <div class="select"><select id="sort">
+      <option value="units-desc">Units sold (most first)</option>
+      <option value="units-asc">Units sold (fewest first)</option>
+      <option value="rev-desc">Revenue (highest first)</option>
+      <option value="name">Item name (A–Z)</option>
+    </select></div>
+  </div>
+  <p class="is-size-7 mb-2" id="sales-status" role="status"></p>
+  <div class="table-wrap"><table class="table is-striped is-hoverable is-fullwidth">
+    <caption class="is-sr-only">Sales by item</caption>
+    <thead><tr><th scope="col">Item</th><th scope="col" class="has-text-right">Units</th><th scope="col" class="has-text-right">Revenue</th><th scope="col">Chart</th></tr></thead>
+    <tbody id="sales-body"></tbody></table></div>
+</section>
+
+<!-- ========== SCREEN 3: ITEM DETAILS ========== -->
+<section id="detail" aria-labelledby="h-detail" hidden>
+  <nav class="breadcrumb" aria-label="Breadcrumb"><ul>
+    <li><a href="#" data-go="overview">Overview</a></li>
+    <li><a href="#" data-go="sales">Sales by item</a></li>
+    <li class="is-active"><a href="#" aria-current="page" id="bc-item"></a></li></ul></nav>
+  <div class="is-flex is-align-items-center mb-4" style="gap:1rem">
+    <span class="icon-box" id="d-icon" aria-hidden="true"></span>
+    <div><h1 class="title mb-1" id="h-detail" tabindex="-1"></h1><div class="tags" id="d-tags"></div></div>
+  </div>
+  <h2 class="title is-5">Last 7 days</h2>
+  <div class="table-wrap"><table class="table is-striped is-fullwidth">
+    <caption class="is-sr-only">Sales for the last 7 days</caption>
+    <thead><tr><th scope="col">Day</th><th scope="col" class="has-text-right">Units</th><th scope="col" class="has-text-right">Revenue</th><th scope="col">Chart</th></tr></thead>
+    <tbody id="d-body"></tbody></table></div>
+  <div class="buttons mt-4">
+    <button class="button is-primary" data-go="sales">Back to sales by item</button>
+    <button class="button" data-go="stock">Check stock levels</button>
+  </div>
+</section>
+
+<!-- ========== SCREEN 4: STOCK LEVELS ========== -->
+<section id="stock" aria-labelledby="h-stock" hidden>
+  <nav class="breadcrumb" aria-label="Breadcrumb"><ul>
+    <li><a href="#" data-go="overview">Overview</a></li><li class="is-active"><a href="#" aria-current="page">Stock levels</a></li></ul></nav>
+  <h1 class="title" id="h-stock" tabindex="-1">Stock levels</h1>
+  <div class="columns">
+    <div class="column"><div class="field"><label class="label" for="q">Search items</label>
+      <div class="control"><input class="input" id="q" type="search" placeholder="e.g. latte" autocomplete="off"></div></div></div>
+    <div class="column"><div class="field"><label class="label" for="filter">Show</label>
+      <div class="select"><select id="filter"><option value="all">All items</option><option value="low">Low stock only</option></select></div></div></div>
+  </div>
+  <p class="is-size-7 mb-3" id="stock-status" role="status"></p>
+  <div id="stock-empty" class="message is-info" hidden>
+    <div class="message-body"><p class="mb-3"><strong>No items match "<span id="q-echo"></span>".</strong> Check the spelling, try a shorter word (like "tea"), or switch "Show" back to All items.</p>
+      <button class="button is-info" id="clear">Clear search and filter</button></div></div>
+  <div class="table-wrap"><table class="table is-fullwidth" id="stock-table">
+    <caption class="is-sr-only">Stock levels</caption>
+    <thead><tr><th scope="col">Item</th><th scope="col">Status</th><th scope="col">In stock</th><th scope="col">Level</th><th scope="col"><span class="is-sr-only">Action</span></th></tr></thead>
+    <tbody id="stock-body"></tbody></table></div>
+</section>
+
+</div>
+</main>
+
+<!-- ========== MODAL: out-of-scope message ========== -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+  <div class="modal-background" data-close></div>
+  <div class="modal-card"><header class="modal-card-head"><h2 class="modal-card-title" id="m-title">Not available yet</h2></header>
+    <section class="modal-card-body">This part isn't in the prototype yet.</section>
+    <footer class="modal-card-foot"><button class="button is-primary" id="m-ok" data-close>OK, go back</button></footer></div>
+</div>
+
+<footer class="footer py-4"><div class="content has-text-centered is-size-7">
+  <p>The Corner Bean · Prototype with fictional data · <a href="#" id="reset">Reset prototype</a></p></div></footer>
+
+<script>
+/* ===== Fake in-memory data: name, category, price £, typical daily units, stock, reorder level ===== */
+const ROWS=[
+["Flat White","Coffee",3.2,70,48,40],["Latte","Coffee",3.4,48,60,40],["Cappuccino","Coffee",3.3,44,70,40],
+["Americano","Coffee",2.8,40,80,30],["Espresso","Coffee",2.4,22,90,30],["Mocha","Coffee",3.8,26,34,30],
+["English Breakfast Tea","Tea",2.6,30,120,40],["Earl Grey","Tea",2.6,18,22,25],["Peppermint Tea","Tea",2.7,12,50,20],
+["Chai Latte","Tea",3.6,16,28,20],["Carrot Cake","Cake",3.9,20,9,10],["Lemon Drizzle","Cake",3.6,18,14,10],
+["Victoria Sponge","Cake",3.8,14,7,10],["Chocolate Brownie","Cake",3.4,24,5,12],["Cheese Scone","Cake",2.9,15,16,10],
+["Almond Croissant","Cake",3.3,25,6,12],["Cheddar & Pickle Sandwich","Sandwich",5.5,19,12,10],
+["Ham & Mustard Baguette","Sandwich",5.9,16,18,10],["Avocado & Halloumi Wrap","Sandwich",6.5,13,4,8],["Egg Mayo Sandwich","Sandwich",5.2,11,15,8]];
+const COL={Coffee:"#8a4b2a",Tea:"#2f7d5b",Cake:"#b03a6a",Sandwich:"#3a62a8"};
+const ITEMS=ROWS.map((r,i)=>({id:i,n:r[0],c:r[1],p:r[2],s:r[4],par:r[5],
+  w:[0,1,2,3,4,5,6].map(d=>Math.round(r[3]*(0.85+0.3*(((i*7+d*5+3)%10)/10))))})); // w[6] = yesterday
+ITEMS.forEach(x=>x.today=Math.round(x.w[6]*0.6));
+const units=(x,p)=>p=="today"?x.today:p=="yesterday"?x.w[6]:x.w.reduce((a,b)=>a+b,0);
+const gbp=v=>"£"+v.toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2});
+const gbp0=v=>"£"+Math.round(v).toLocaleString("en-GB");
+const status=x=>x.s<=x.par/2?["Order now","is-danger"]:x.s<=x.par?["Low","is-warning"]:["OK","is-success"];
+const $=id=>document.getElementById(id);
+const TODAY=new Date(2026,10,19);
+const dayName=o=>{const d=new Date(TODAY);d.setDate(d.getDate()-o);return d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})};
+const PERIODS={today:"Today",yesterday:"Yesterday",week:"Last 7 days"};
+let period="yesterday";
+const icon=c=>'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8zM17 10h2a2 2 0 0 1 0 4h-2"/></svg>';
+
+/* ===== Screen switching ===== */
+function go(id){
+  ["overview","sales","detail","stock"].forEach(s=>$(s).hidden=s!==id);
+  $("menu").classList.remove("is-active");$("burger").classList.remove("is-active");$("burger").setAttribute("aria-expanded","false");
+  if(id=="overview")renderOverview(); if(id=="sales")renderSales(); if(id=="stock")renderStock();
+  const h=document.querySelector("#"+id+" h1"); h.focus(); window.scrollTo(0,0);
+}
+/* ===== Screen 1 ===== */
+function renderOverview(){
+  const rev=ITEMS.reduce((a,x)=>a+x.today*x.p,0), u=ITEMS.reduce((a,x)=>a+x.today,0);
+  $("o-sales").textContent=gbp(rev); $("o-orders").textContent=Math.round(u/1.9);
+  const b=[...ITEMS].sort((a,c)=>c.w[6]-a.w[6])[0];
+  $("o-best").textContent=b.n+" – "+b.w[6]+" sold ("+gbp(b.w[6]*b.p)+")";
+  const low=ITEMS.filter(x=>x.s<=x.par).length;
+  $("o-low").textContent=low+" items are running low on stock. Take a look before the afternoon rush.";
+}
+/* ===== Screen 2 ===== */
+function renderSales(){
+  $("tabs").innerHTML=Object.keys(PERIODS).map(k=>`<li class="${k==period?"is-active":""}"><a href="#" data-tab="${k}" ${k==period?'aria-current="true"':""}>${PERIODS[k]}</a></li>`).join("");
+  const s=$("sort").value, list=[...ITEMS], U=x=>units(x,period);
+  list.sort((a,b)=>s=="units-desc"?U(b)-U(a):s=="units-asc"?U(a)-U(b):s=="rev-desc"?U(b)*b.p-U(a)*a.p:a.n.localeCompare(b.n));
+  const max=Math.max(...list.map(U));
+  $("sales-body").innerHTML=list.map(x=>`<tr><th scope="row"><button class="linkish" data-item="${x.id}">${x.n}</button></th>
+    <td class="has-text-right">${U(x)}</td><td class="has-text-right">${gbp(U(x)*x.p)}</td>
+    <td><progress class="progress is-primary" value="${U(x)}" max="${max}" aria-label="${x.n}: ${U(x)} units">${U(x)}</progress></td></tr>`).join("");
+  $("sales-status").textContent=`Showing ${PERIODS[period].toLowerCase()}, all 20 items, sorted by "${$("sort").selectedOptions[0].text}".`;
+}
+/* ===== Screen 3 ===== */
+function showItem(id){
+  const x=ITEMS[id], max=Math.max(...x.w), st=status(x);
+  $("h-detail").textContent=x.n; $("bc-item").textContent=x.n;
+  $("d-icon").style.background=COL[x.c]; $("d-icon").innerHTML=icon();
+  $("d-tags").innerHTML=`<span class="tag is-light">${x.c}</span><span class="tag is-light">${gbp(x.p)} each</span><span class="tag ${st[1]} is-light">Stock: ${st[0]} (${x.s} left)</span>`;
+  $("d-body").innerHTML=x.w.map((v,d)=>`<tr><th scope="row">${dayName(6-d)}${d==6?" (yesterday)":""}</th><td class="has-text-right">${v}</td><td class="has-text-right">${gbp(v*x.p)}</td>
+    <td><progress class="progress is-primary" value="${v}" max="${max}" aria-label="${v} units">${v}</progress></td></tr>`).join("");
+  go("detail");
+}
+/* ===== Screen 4 ===== */
+function renderStock(){
+  const q=$("q").value.trim().toLowerCase(), f=$("filter").value;
+  const list=ITEMS.filter(x=>x.n.toLowerCase().includes(q)&&(f=="all"||x.s<=x.par)).sort((a,b)=>a.s/a.par-b.s/b.par);
+  $("stock-body").innerHTML=list.map(x=>{const st=status(x),col=st[1].replace("is-","");
+    return `<tr><th scope="row">${x.n}</th><td><span class="tag ${st[1]} is-light">${st[0]}</span></td><td>${x.s}</td>
+    <td><progress class="progress is-${col}" value="${x.s}" max="${x.par*3}" aria-label="${x.n} stock level">${x.s}</progress></td>
+    <td>${x.s<=x.par?`<button class="button is-small is-primary is-outlined" data-soon>Reorder</button>`:""}</td></tr>`}).join("");
+  $("stock-table").hidden=!list.length; $("stock-empty").hidden=!!list.length; $("q-echo").textContent=$("q").value;
+  $("stock-status").textContent=`${list.length} of 20 items shown, lowest stock first.`;
+}
+/* ===== Modal ===== */
+let opener=null;
+function openModal(){opener=document.activeElement;$("modal").classList.add("is-active");$("m-ok").focus()}
+function closeModal(){$("modal").classList.remove("is-active");opener&&opener.focus()}
+/* ===== Events ===== */
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-go],[data-tab],[data-item],[data-soon],[data-close]"); if(!t)return;
+  e.preventDefault();
+  if(t.hasAttribute("data-close"))return closeModal();
+  if(t.hasAttribute("data-soon"))return openModal();
+  if(t.dataset.item!==undefined)return showItem(+t.dataset.item);
+  if(t.dataset.tab){period=t.dataset.tab; if(t.dataset.go){$("sort").value="units-desc";return go("sales")} renderSales();return $("tabs").querySelector(".is-active a").focus()}
+  go(t.dataset.go);
+});
+document.addEventListener("keydown",e=>{if(e.key=="Escape"&&$("modal").classList.contains("is-active"))closeModal()});
+$("sort").addEventListener("change",renderSales);
+$("q").addEventListener("input",renderStock); $("filter").addEventListener("change",renderStock);
+$("clear").addEventListener("click",()=>{$("q").value="";$("filter").value="all";renderStock();$("q").focus()});
+$("burger").addEventListener("click",()=>{const a=$("menu").classList.toggle("is-active");$("burger").classList.toggle("is-active",a);$("burger").setAttribute("aria-expanded",a)});
+$("reset").addEventListener("click",e=>{e.preventDefault();$("q").value="";$("filter").value="all";$("sort").value="units-desc";period="yesterday";go("overview")});
+renderOverview();
+</script>
+</body>
+</html>
